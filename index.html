@@ -6,11 +6,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#8ad0ff" />
-  <title>Apple Catcher: Defender</title>
+  <title>Apple Defense</title>
   <style>
     :root {
-      --game-width: min(94vw, 440px);
-      --game-height: min(86vh, 760px);
       --sky-top: #9ee0ff;
       --sky-mid: #dff5ff;
       --grass-top: #d7f7a7;
@@ -18,27 +16,27 @@
       --hud-bg: rgba(255,255,255,0.72);
       --panel-border: rgba(0,0,0,0.18);
       --dark: #1d2b3a;
-      --gun: #333a41;
-      --gun-detail: #7e8d98;
+      --gun: #303840;
+      --gun-detail: #788694;
       --switch: #ffca62;
-      --switch-rail: #8c5832;
+      --switch-rail: #7c4d2d;
       --char-skin: #f9d2a7;
       --char-shirt: #2c7be5;
-      --char-pants: #223247;
-      --char-bag: #6a4c3d;
+      --char-bag: #6f4a3b;
       --apple-red: #d81d1d;
       --apple-dark: #9f1010;
-      --apple-leaf: #3f8d2d;
+      --apple-leaf: #3b8f2d;
+      --gold: #ffd75a;
+      --danger: #ff4d4d;
+      --boss: #7f26ff;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-
     html, body {
       margin: 0; width: 100%; height: 100%; overflow: hidden;
       background: #8ad0ff; font-family: Arial, sans-serif; color: var(--dark);
       touch-action: none;
     }
-
     body {
       display: flex; align-items: center; justify-content: center;
       padding: max(10px, env(safe-area-inset-top)) 0 max(10px, env(safe-area-inset-bottom));
@@ -46,27 +44,27 @@
 
     #game {
       position: relative;
-      width: var(--game-width); height: var(--game-height);
-      border: 5px solid #2d4d3a; border-radius: 20px; overflow: hidden;
+      width: min(94vw, 440px);
+      height: min(86vh, 760px);
+      border: 5px solid #2d4d3a;
+      border-radius: 20px;
+      overflow: hidden;
       background: linear-gradient(var(--sky-top) 0%, var(--sky-mid) 62%, var(--grass-top) 62%, var(--grass-bottom) 100%);
       box-shadow: 0 14px 30px rgba(0,0,0,0.18);
       touch-action: none;
     }
 
     .hud {
-      position: absolute; top: 10px; left: 10px; right: 10px; z-index: 30;
-      display: flex; justify-content: space-between; align-items: center;
-      gap: 8px;
+      position: absolute; top: 8px; left: 8px; right: 8px; z-index: 30;
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
     }
 
     .panel {
       background: var(--hud-bg); border: 3px solid var(--panel-border);
-      border-radius: 12px; padding: 8px 10px; font-weight: bold; font-size: clamp(14px, 3vw, 18px);
-      min-width: 90px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }
-
-    #modeTag {
-      min-width: 110px;
+      border-radius: 12px; padding: 8px 10px; font-weight: bold;
+      font-size: clamp(13px, 2.8vw, 16px); text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      min-width: 70px;
     }
 
     .world {
@@ -75,25 +73,28 @@
 
     .ground {
       position: absolute; left: 0; right: 0; bottom: 0; height: 72px;
-      background: linear-gradient(#7edc63, #5ca947); border-top: 4px solid #447a35;
-      z-index: 1;
+      background: linear-gradient(#7edc63, #5ca947);
+      border-top: 4px solid #447a35; z-index: 1;
+    }
+
+    .effect-layer, .projectile-layer, .apple-layer {
+      position: absolute; inset: 0; pointer-events: none; z-index: 15;
     }
 
     .player {
-      position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+      position: absolute; bottom: 18px; left: 50%;
       width: 110px; height: 120px; z-index: 12;
       pointer-events: none;
-      user-select: none;
     }
 
-    .char-body {
+    .player .char-body {
       position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
       width: 64px; height: 78px; border-radius: 12px 12px 18px 18px;
       background: linear-gradient(var(--char-shirt), #1b5ec7);
       box-shadow: inset 0 -12px 0 rgba(0,0,0,0.12);
     }
 
-    .head {
+    .player .head {
       position: absolute; left: 50%; top: 0; transform: translateX(-50%);
       width: 36px; height: 36px; border-radius: 50%;
       background: var(--char-skin);
@@ -101,13 +102,13 @@
       box-shadow: inset -6px -4px 0 rgba(0,0,0,0.05);
     }
 
-    .head::before, .head::after {
+    .player .head::before, .player .head::after {
       content: ""; position: absolute; top: 12px; width: 4px; height: 4px; border-radius: 50%; background: #23313d;
     }
-    .head::before { left: 9px; }
-    .head::after  { right: 9px; }
+    .player .head::before { left: 9px; }
+    .player .head::after { right: 9px; }
 
-    .backpack {
+    .player .backpack {
       position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
       width: 48px; height: 54px; border-radius: 14px;
       background: linear-gradient(var(--char-bag), #4f352d);
@@ -115,44 +116,66 @@
       z-index: 2;
     }
 
-    .switch-rail {
+    .player .switch-rail {
       position: absolute; left: 50%; bottom: 42px; transform: translateX(-50%);
       width: 22px; height: 12px; border-radius: 999px;
-      background: var(--switch-rail); box-shadow: inset 0 2px 4px rgba(0,0,0,0.25);
-      z-index: 4;
+      background: var(--switch-rail);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.25);
+      z-index: 5;
     }
-
-    .switch-rail::after {
+    .player .switch-rail::after {
       content: ""; position: absolute; left: 2px; top: 2px;
       width: 8px; height: 8px; border-radius: 50%;
-      background: var(--switch); box-shadow: 0 0 8px rgba(255,202,98,0.8);
+      background: var(--switch);
+      box-shadow: 0 0 8px rgba(255,202,98,0.8);
       transition: left 0.15s ease;
     }
+    .player.mode-burst .switch-rail::after { left: 12px; }
 
-    .mode-burst .switch-rail::after { left: 12px; }
-
-    .gun {
+    .player .gun {
       position: absolute; right: 8px; bottom: 35px;
       width: 58px; height: 18px; border-radius: 10px;
       background: linear-gradient(var(--gun), #202932);
       border: 3px solid rgba(255,255,255,0.12);
-      z-index: 5; transform: rotate(-10deg);
       box-shadow: inset 0 0 10px rgba(255,255,255,0.08);
+      z-index: 6; transform: rotate(-10deg);
     }
-
-    .gun::before {
-      content: ""; position: absolute; left: -10px; top: 2px; width: 18px; height: 10px;
-      background: linear-gradient(var(--gun-detail), #586570); border-radius: 6px;
+    .player .gun::before {
+      content: ""; position: absolute; left: -10px; top: 2px;
+      width: 18px; height: 10px; background: linear-gradient(var(--gun-detail), #586570);
+      border-radius: 6px;
     }
-
-    .gun::after {
+    .player .gun::after {
       content: ""; position: absolute; right: -10px; top: 3px; width: 10px; height: 8px;
       background: linear-gradient(#444a51, #1d2127); border-radius: 4px;
     }
 
-    .projectiles, .items {
-      position: absolute; inset: 0; z-index: 15;
-      pointer-events: none;
+    .apple {
+      position: absolute; width: 32px; height: 32px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 25%, #ffb1b1, var(--apple-red) 48%, var(--apple-dark) 100%);
+      box-shadow: inset -4px -4px 0 rgba(0,0,0,0.12);
+      z-index: 10;
+    }
+    .apple::before {
+      content: ""; position: absolute; width: 6px; height: 12px; left: 13px; top: -11px;
+      border-radius: 50% 50% 40% 40%; background: var(--apple-leaf); transform: rotate(18deg);
+    }
+    .apple::after {
+      content: ""; position: absolute; width: 9px; height: 9px; left: 13px; top: -3px;
+      border-radius: 50%; background: #6b9b2d; transform: rotate(20deg);
+    }
+
+    .apple.boss {
+      width: 84px; height: 84px;
+      background: radial-gradient(circle at 30% 25%, #efc9ff, var(--boss) 50%, #4b0ea8 100%);
+      box-shadow: 0 0 18px rgba(127,38,255,0.7), inset -8px -8px 0 rgba(0,0,0,0.18);
+    }
+    .apple.boss::before {
+      left: 35px; top: -22px; width: 12px; height: 28px;
+      background: #2dff96;
+    }
+    .apple.boss::after {
+      left: 35px; top: -5px; width: 14px; height: 14px; background: #8df0ff;
     }
 
     .projectile {
@@ -162,43 +185,36 @@
       z-index: 18;
     }
 
-    .item {
-      position: absolute; width: 32px; height: 32px; border-radius: 50%;
-      background: radial-gradient(circle at 30% 25%, #ffb1b1, var(--apple-red) 48%, var(--apple-dark) 100%);
-      box-shadow: inset -4px -4px 0 rgba(0,0,0,0.12);
-      z-index: 10;
+    .effect {
+      position: absolute; width: 12px; height: 12px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,189,58,0.8), rgba(255,98,0,0.3), transparent 70%);
+      pointer-events: none; z-index: 25;
     }
 
-    .item::before {
-      content: ""; position: absolute; width: 6px; height: 12px; left: 13px; top: -11px;
-      border-radius: 50% 50% 40% 40%; background: var(--apple-leaf); transform: rotate(18deg);
+    .pause-btn {
+      position: absolute; right: 10px; top: 10px; z-index: 40;
+      border: none; background: rgba(0,0,0,0.2); color: white;
+      border-radius: 12px; padding: 8px 10px; font-weight: bold;
     }
 
-    .item::after {
-      content: ""; position: absolute; width: 9px; height: 9px; left: 13px; top: -3px;
-      border-radius: 50%; background: #6b9b2d; transform: rotate(20deg);
-    }
-
-    .message {
+    .overlay {
       position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
-      background: rgba(10,25,25,0.45); color: white; text-align: center; z-index: 40;
+      background: rgba(10,25,25,0.42); color: white; text-align: center; z-index: 50;
     }
+    .overlay.show { display: flex; }
 
-    .message.show { display: flex; }
-
-    .message-box {
+    .overlay-box {
       display: flex; flex-direction: column; align-items: center; gap: 14px;
-      padding: 20px 24px; border-radius: 18px; background: rgba(25,40,60,0.6);
+      padding: 22px 26px; border-radius: 18px; background: rgba(26,38,52,0.64);
       border: 3px solid rgba(255,255,255,0.18);
+      max-width: 280px;
+      width: 80%;
     }
-
-    .message-box h2 {
-      margin: 0; font-size: clamp(30px, 7vw, 44px);
-    }
-
-    .message-box button {
-      padding: 12px 22px; border: none; border-radius: 12px; background: #f5bf54; color: #1d2b3a;
-      font-size: 18px; font-weight: bold; cursor: pointer;
+    .overlay-box h2 { margin: 0; font-size: clamp(28px, 7vw, 42px); }
+    .overlay-box p { margin: 0; font-size: 16px; opacity: 0.9; }
+    .overlay-box button {
+      padding: 12px 22px; border: none; border-radius: 12px;
+      background: #f5bf54; color: #1d2b3a; font-size: 18px; font-weight: bold; cursor: pointer;
     }
   </style>
 </head>
@@ -207,13 +223,16 @@
     <div class="hud">
       <div class="panel">Score: <span id="score">0</span></div>
       <div class="panel">Lives: <span id="lives">3</span></div>
+      <div class="panel">Wave: <span id="wave">1</span></div>
       <div class="panel" id="modeTag">Mode: Single</div>
     </div>
 
-    <div class="world" id="world">
-      <div class="projectiles" id="projectiles"></div>
-      <div class="items" id="items"></div>
+    <button class="pause-btn" id="pauseBtn">Pause</button>
 
+    <div class="world">
+      <div class="effect-layer" id="effects"></div>
+      <div class="projectile-layer" id="projectiles"></div>
+      <div class="apple-layer" id="apples"></div>
       <div id="player" class="player mode-single">
         <div class="head"></div>
         <div class="backpack"></div>
@@ -221,259 +240,402 @@
         <div class="gun"></div>
         <div class="char-body"></div>
       </div>
-
       <div class="ground"></div>
     </div>
 
-    <div class="message show" id="message">
-      <div class="message-box">
-        <h2 id="messageTitle">Apple Defense</h2>
-        <button id="startButton">Start Game</button>
+    <div class="overlay show" id="overlay">
+      <div class="overlay-box">
+        <h2 id="overlayTitle">Apple Defense</h2>
+        <p id="overlayText">Tap start to begin. Drag to move and tap to shoot.</p>
+        <button id="startBtn">Start Game</button>
       </div>
     </div>
   </div>
 
   <script>
     const game = document.getElementById('game');
-    const world = document.getElementById('world');
     const player = document.getElementById('player');
     const scoreEl = document.getElementById('score');
     const livesEl = document.getElementById('lives');
+    const waveEl = document.getElementById('wave');
     const modeTag = document.getElementById('modeTag');
     const projectilesLayer = document.getElementById('projectiles');
-    const itemsLayer = document.getElementById('items');
-    const messageEl = document.getElementById('message');
-    const messageTitle = document.getElementById('messageTitle');
-    const startButton = document.getElementById('startButton');
+    const applesLayer = document.getElementById('apples');
+    const effectsLayer = document.getElementById('effects');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlayText = document.getElementById('overlayText');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
 
     const modes = ['Single', 'Burst'];
     let modeIndex = 0;
-    let playerX = 0;
-    let playerWidth = 110;
     let gameWidth = 420;
     let gameHeight = 700;
-    let score = 0;
+    let playerX = gameWidth / 2;
     let lives = 3;
-    let gameStarted = false;
+    let score = 0;
+    let wave = 1;
+    let isPlaying = false;
+    let isPaused = false;
     let gameOver = false;
     let lastTime = 0;
     let spawnTimer = 0;
+    let bossSpawned = false;
     let projectileId = 0;
-    let projectileSpeed = 9;
+
     const projectiles = [];
-    const items = [];
+    const apples = [];
+    const effects = [];
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let audioReady = false;
+
+    function initAudio() {
+      if (!audioReady) {
+        audioCtx.resume();
+        audioReady = true;
+      }
+    }
+
+    function playTone(freq = 660, duration = 0.05, type = 'square', gainValue = 0.03) {
+      if (!audioReady) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.value = gainValue;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function updateModeUI() {
+      modeTag.textContent = `Mode: ${modes[modeIndex]}`;
+      player.classList.toggle('mode-burst', modeIndex === 1);
+      player.classList.toggle('mode-single', modeIndex === 0);
+    }
 
     function updateSize() {
       const rect = game.getBoundingClientRect();
       gameWidth = rect.width;
       gameHeight = rect.height;
-      playerWidth = Math.min(110, gameWidth * 0.25);
-      player.style.width = playerWidth + 'px';
-      playerX = Math.max(30, Math.min(playerX || (gameWidth / 2), gameWidth - 50));
-      player.style.left = (playerX) + 'px';
-    }
-
-    function setPlayerPosition(clientX) {
-      const rect = game.getBoundingClientRect();
-      const x = clientX - rect.left;
-      playerX = Math.max(30, Math.min(x, gameWidth - 30));
+      playerX = Math.max(30, Math.min(playerX || gameWidth / 2, gameWidth - 30));
       player.style.left = playerX + 'px';
-    }
-
-    function updateModeUI() {
-      modeTag.textContent = 'Mode: ' + modes[modeIndex];
-      player.classList.toggle('mode-burst', modeIndex === 1);
-      player.classList.toggle('mode-single', modeIndex === 0);
     }
 
     function toggleMode() {
       modeIndex = (modeIndex + 1) % modes.length;
       updateModeUI();
+      playTone(520, 0.05, 'triangle', 0.025);
     }
 
-    function startGame() {
-      score = 0;
-      lives = 3;
-      gameStarted = true;
-      gameOver = false;
-      lastTime = 0;
-      scoreEl.textContent = score;
-      livesEl.textContent = lives;
-      messageEl.classList.remove('show');
-      startButton.textContent = 'Play Again';
-      while (items.length) {
-        const item = items.pop(); item.el.remove();
+    function setPlayerX(clientX) {
+      const rect = game.getBoundingClientRect();
+      const x = clientX - rect.left;
+      playerX = Math.max(28, Math.min(x, gameWidth - 28));
+      player.style.left = `${playerX}px`;
+    }
+
+    function createExplosion(x, y, color = '#ffb347') {
+      for (let i = 0; i < 18; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'effect';
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        particle.style.background = `radial-gradient(circle, rgba(255,255,255,0.9), ${color}, transparent 72%)`;
+        particle.style.width = `${8 + Math.random() * 10}px`;
+        particle.style.height = particle.style.width;
+        effectsLayer.appendChild(particle);
+
+        effects.push({
+          el: particle,
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          life: 25 + Math.random() * 18
+        });
       }
-      while (projectiles.length) {
-        const p = projectiles.pop(); p.el.remove();
-      }
-      playerX = gameWidth / 2;
-      player.style.left = playerX + 'px';
-      requestAnimationFrame(loop);
     }
 
-    function showMessage(titleText, buttonText) {
-      messageTitle.textContent = titleText;
-      startButton.textContent = buttonText;
-      messageEl.classList.add('show');
-    }
-
-    function dropItem() {
+    function spawnApple(forceBoss = false) {
       const apple = document.createElement('div');
-      apple.className = 'item';
+      const isBoss = forceBoss || (score > 0 && score % 12 === 0 && !bossSpawned);
+      apple.className = `apple${isBoss ? ' boss' : ''}`;
       const x = 18 + Math.random() * (gameWidth - 50);
-      const y = -20;
-      apple.style.left = x + 'px';
-      apple.style.top = y + 'px';
-      itemsLayer.appendChild(apple);
-      items.push({
+      const y = -30;
+      apple.style.left = `${x}px`;
+      apple.style.top = `${y}px`;
+      applesLayer.appendChild(apple);
+
+      apples.push({
         el: apple,
         x,
         y,
-        speed: 2.2 + Math.random() * 2.2 + score * 0.05
+        speed: isBoss ? 1.2 : 2 + Math.random() * 2.4 + wave * 0.2,
+        isBoss,
+        hp: isBoss ? 4 : 1
       });
+
+      if (isBoss) {
+        bossSpawned = true;
+        overlayTitle.textContent = 'Boss Wave!';
+        overlayText.textContent = 'Destroy the giant apple.';
+        setTimeout(() => {
+          if (overlay.classList.contains('show')) overlay.classList.remove('show');
+        }, 700);
+      }
     }
 
     function fireProjectile() {
-      if (!gameStarted || gameOver) return;
-
+      if (!isPlaying || isPaused || gameOver) return;
+      initAudio();
+      playTone(780, 0.05, 'square', 0.03);
       const baseX = playerX + 22;
       const baseY = gameHeight - 68;
-      const list = modeIndex === 1 ? [-0.22, 0, 0.22] : [0];
+      const shots = modeIndex === 1 ? [-0.25, 0, 0.25] : [0];
 
-      list.forEach((angleOffset) => {
-        const missile = document.createElement('div');
-        missile.className = 'projectile';
-        missile.style.left = (baseX - 6) + 'px';
-        missile.style.top = (baseY - 10) + 'px';
-        projectilesLayer.appendChild(missile);
+      shots.forEach((angle) => {
+        const bullet = document.createElement('div');
+        bullet.className = 'projectile';
+        bullet.style.left = `${baseX - 6}px`;
+        bullet.style.top = `${baseY - 8}px`;
+        projectilesLayer.appendChild(bullet);
 
         projectiles.push({
           id: ++projectileId,
-          el: missile,
+          el: bullet,
           x: baseX - 6,
-          y: baseY - 10,
-          vx: Math.sin(angleOffset) * 1.5,
-          vy: -projectileSpeed,
-          r: 6,
+          y: baseY - 8,
+          vx: Math.sin(angle) * 2.2,
+          vy: -10,
           life: 90
         });
       });
     }
 
-    function checkHits() {
+    function showOverlay(title, text, buttonText) {
+      overlayTitle.textContent = title;
+      overlayText.textContent = text;
+      startBtn.textContent = buttonText;
+      overlay.classList.add('show');
+    }
+
+    function startGame() {
+      initAudio();
+      score = 0; lives = 3; wave = 1; gameOver = false; isPaused = false; isPlaying = true;
+      lastTime = 0; spawnTimer = 0; bossSpawned = false;
+      scoreEl.textContent = '0';
+      livesEl.textContent = '3';
+      waveEl.textContent = '1';
+      pauseBtn.textContent = 'Pause';
+      overlay.classList.remove('show');
+
+      while (apples.length) {
+        const a = apples.pop(); a.el.remove();
+      }
+      while (projectiles.length) {
+        const p = projectiles.pop(); p.el.remove();
+      }
+      while (effects.length) {
+        const e = effects.pop(); e.el.remove();
+      }
+
+      playerX = gameWidth / 2;
+      player.style.left = `${playerX}px`;
+      playTone(440, 0.1, 'triangle', 0.04);
+      requestAnimationFrame(loop);
+    }
+
+    function pauseGame() {
+      if (!isPlaying || gameOver) return;
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+      if (isPaused) {
+        showOverlay('Paused', 'Tap resume to continue.', 'Resume');
+      } else {
+        overlay.classList.remove('show');
+        requestAnimationFrame(loop);
+      }
+    }
+
+    function updateWave() {
+      const newWave = Math.floor(score / 12) + 1;
+      if (newWave !== wave) {
+        wave = newWave;
+        waveEl.textContent = wave;
+        playTone(880, 0.1, 'sawtooth', 0.04);
+      }
+    }
+
+    function checkProjectileHits() {
       for (let i = projectiles.length - 1; i >= 0; i--) {
         const p = projectiles[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.el.style.left = p.x + 'px';
-        p.el.style.top = p.y + 'px';
+        p.el.style.left = `${p.x}px`;
+        p.el.style.top = `${p.y}px`;
         p.life--;
 
-        if (p.life <= 0 || p.y < -20 || p.x < -10 || p.x > gameWidth + 20) {
+        if (p.x < -20 || p.x > gameWidth + 20 || p.y < -20 || p.life <= 0) {
           p.el.remove();
           projectiles.splice(i, 1);
           continue;
         }
 
-        for (let j = items.length - 1; j >= 0; j--) {
-          const item = items[j];
-          const distX = p.x - (item.x + 16);
-          const distY = p.y - (item.y + 16);
-          if (Math.hypot(distX, distY) < 22) {
-            item.el.remove();
-            items.splice(j, 1);
+        for (let j = apples.length - 1; j >= 0; j--) {
+          const apple = apples[j];
+          const dx = p.x - (apple.x + apple.el.offsetWidth / 2);
+          const dy = p.y - (apple.y + apple.el.offsetHeight / 2);
+          const dist = Math.hypot(dx, dy);
+
+          if (dist < (apple.isBoss ? 42 : 18)) {
+            apple.hp -= 1;
             p.el.remove();
             projectiles.splice(i, 1);
-            score += 1;
-            scoreEl.textContent = score;
+
+            createExplosion(p.x, p.y, apple.isBoss ? '#d8b4ff' : '#ffb347');
+
+            if (apple.hp <= 0) {
+              apple.el.remove();
+              apples.splice(j, 1);
+              score += apple.isBoss ? 8 : 1;
+              scoreEl.textContent = score;
+              updateWave();
+              playTone(apple.isBoss ? 140 : 520, apple.isBoss ? 0.14 : 0.07, 'triangle', apple.isBoss ? 0.05 : 0.03);
+              if (apple.isBoss) bossSpawned = false;
+            }
             break;
           }
         }
       }
     }
 
-    function updateItems(dt) {
-      for (let i = items.length - 1; i >= 0; i--) {
-        const item = items[i];
-        item.y += item.speed * dt;
-        item.el.style.top = item.y + 'px';
+    function updateApples(dt) {
+      for (let i = apples.length - 1; i >= 0; i--) {
+        const apple = apples[i];
+        apple.y += apple.speed * dt;
+        apple.el.style.top = `${apple.y}px`;
+        apple.el.style.left = `${apple.x}px`;
 
-        if (item.y > gameHeight - 100) {
-          item.el.remove();
-          items.splice(i, 1);
-          lives -= 1;
+        if (apple.y > gameHeight - 84) {
+          apple.el.remove();
+          apples.splice(i, 1);
+
+          if (apple.isBoss) {
+            bossSpawned = false;
+            lives -= 2;
+          } else {
+            lives -= 1;
+          }
+
           livesEl.textContent = lives;
+          createExplosion(apple.x, apple.y, '#ff4d4d');
+          playTone(220, 0.1, 'sawtooth', 0.04);
 
           if (lives <= 0) {
+            isPlaying = false;
             gameOver = true;
-            gameStarted = false;
-            showMessage('Game Over', 'Play Again');
-            return;
+            showOverlay('Game Over', `Final Score: ${score}`, 'Play Again');
+            playTone(120, 0.3, 'square', 0.04);
           }
         }
       }
     }
 
-    function loop(ts) {
-      if (!gameStarted) return;
+    function updateEffects() {
+      for (let i = effects.length - 1; i >= 0; i--) {
+        const e = effects[i];
+        e.x += e.vx;
+        e.y += e.vy;
+        e.life -= 1;
+        e.el.style.left = `${e.x}px`;
+        e.el.style.top = `${e.y}px`;
+        e.el.style.opacity = `${Math.max(e.life / 40, 0)}`;
+        if (e.life <= 0) {
+          e.el.remove();
+          effects.splice(i, 1);
+        }
+      }
+    }
 
-      const delta = (ts - lastTime) || 16;
-      lastTime = ts;
+    function loop(timestamp) {
+      if (!isPlaying || isPaused || gameOver) return;
+
+      const delta = timestamp - lastTime || 16;
+      lastTime = timestamp;
       spawnTimer += delta;
 
-      if (spawnTimer > 650) {
-        dropItem();
+      if (spawnTimer > Math.max(500, 900 - wave * 45)) {
+        spawnApple();
         spawnTimer = 0;
       }
 
-      checkHits();
-      updateItems(delta / 16);
+      if (score > 0 && score % 12 === 0 && !bossSpawned) {
+        spawnApple(true);
+      }
 
+      checkProjectileHits();
+      updateApples(delta / 16);
+      updateEffects();
       requestAnimationFrame(loop);
     }
 
-    player.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      if (!gameStarted || gameOver) return;
-      fireProjectile();
-    });
-
     game.addEventListener('pointerdown', (e) => {
-      if (gameOver || !gameStarted) return;
-      setPlayerPosition(e.clientX);
+      if (!isPlaying || e.target.id === 'pauseBtn') return;
+      setPlayerX(e.clientX);
       fireProjectile();
     });
 
     game.addEventListener('pointermove', (e) => {
-      if (!gameStarted || gameOver) return;
-      setPlayerPosition(e.clientX);
-    });
-
-    startButton.addEventListener('click', startGame);
-
-    player.addEventListener('dblclick', () => toggleMode());
-    player.addEventListener('pointerdown', (e) => {
-      const rect = player.getBoundingClientRect();
-      const localX = e.clientX - rect.left;
-      const localY = e.clientY - rect.top;
-      if (localX < rect.width * 0.5 && localY < rect.height * 0.55) {
-        toggleMode();
+      if (isPlaying && !isPaused && !gameOver) {
+        setPlayerX(e.clientX);
       }
     });
+
+    player.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      if (!isPlaying || isPaused || gameOver) return;
+      const rect = player.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if (x < rect.width * 0.48 && y < rect.height * 0.7) {
+        toggleMode();
+      } else {
+        fireProjectile();
+      }
+    });
+
+    startBtn.addEventListener('click', () => {
+      if (isPaused && isPlaying && !gameOver) {
+        isPaused = false;
+        pauseBtn.textContent = 'Pause';
+        overlay.classList.remove('show');
+        requestAnimationFrame(loop);
+      } else {
+        startGame();
+      }
+    });
+
+    pauseBtn.addEventListener('click', pauseGame);
 
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
         e.preventDefault();
-        if (!gameStarted && !gameOver) startGame();
-        else if (gameStarted) fireProjectile();
+        if (!isPlaying && !gameOver) startGame();
+        else fireProjectile();
       }
       if (e.key.toLowerCase() === 'm') toggleMode();
+      if (e.key.toLowerCase() === 'p') pauseGame();
     });
 
     updateSize();
     updateModeUI();
-    showMessage('Apple Defense', 'Start Game');
+    showOverlay('Apple Defense', 'Tap start to begin. Drag to move and tap to shoot.', 'Start Game');
     window.addEventListener('resize', updateSize);
   </script>
 </body>
