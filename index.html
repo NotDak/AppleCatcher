@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#8ad0ff" />
+  <title>Apple Catcher</title>
+  <style>
+    :root {
+      --game-width: min(92vw, 420px);
+      --game-height: min(82vh, 720px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #8ad0ff;
+      font-family: Arial, sans-serif;
+      color: #1d2b3a;
+      touch-action: none;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: max(12px, env(safe-area-inset-top)) 0 max(12px, env(safe-area-inset-bottom));
+    }
+
+    #game {
+      position: relative;
+      width: var(--game-width);
+      height: var(--game-height);
+      border: 5px solid #2d4d3a;
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(#9ee0ff 0%, #dff5ff 62%, #d7f7a7 62%, #b9e98a 100%);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+      touch-action: none;
+    }
+
+    .scoreboard {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 10;
+      background: rgba(255,255,255,0.72);
+      border: 3px solid rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: clamp(18px, 3vw, 24px);
+      font-weight: bold;
+    }
+
+    .basket {
+      position: absolute;
+      bottom: 14px;
+      left: 150px;
+      width: 120px;
+      height: 52px;
+      background: linear-gradient(#f0a14d, #b96d22);
+      border: 4px solid #6f3d14;
+      border-bottom-width: 8px;
+      border-radius: 14px 14px 18px 18px;
+      box-shadow: inset 0 0 12px rgba(255,255,255,0.18);
+      transition: left 0.08s linear;
+      z-index: 4;
+    }
+
+    .basket::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 8px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .apple {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 25%, #ffb1b1, #d81d1d 48%, #9f1010 100%);
+      box-shadow: inset -4px -4px 0 rgba(0,0,0,0.14);
+      z-index: 3;
+    }
+
+    .apple::before {
+      content: "";
+      position: absolute;
+      width: 6px;
+      height: 12px;
+      left: 11px;
+      top: -10px;
+      border-radius: 50% 50% 40% 40%;
+      background: #3f8d2d;
+      transform: rotate(18deg);
+    }
+
+    .apple::after {
+      content: "";
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      left: 13px;
+      top: -3px;
+      border-radius: 50%;
+      background: #6b9b2d;
+      transform: rotate(20deg);
+    }
+
+    .ground {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 70px;
+      background: linear-gradient(#7edc63, #5ca947);
+      border-top: 4px solid #447a35;
+      z-index: 1;
+    }
+
+    .message {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(20,40,30,0.45);
+      color: white;
+      font-size: clamp(28px, 6vw, 40px);
+      font-weight: bold;
+      text-align: center;
+      z-index: 20;
+    }
+
+    .message.show {
+      display: flex;
+    }
+
+    .message .panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    button {
+      padding: 12px 22px;
+      border: none;
+      border-radius: 12px;
+      background: #f5bf54;
+      color: #1d2b3a;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div class="scoreboard">Score: <span id="score">0</span></div>
+    <div class="basket" id="basket"></div>
+
+    <div class="message" id="message">
+      <div class="panel">
+        <div>Game Over</div>
+        <button id="restart">Play Again</button>
+      </div>
+    </div>
+
+    <div class="ground"></div>
+  </div>
+
+  <script>
+    const game = document.getElementById("game");
+    const basket = document.getElementById("basket");
+    const scoreEl = document.getElementById("score");
+    const message = document.getElementById("message");
+    const restartBtn = document.getElementById("restart");
+
+    let gameWidth = 420;
+    let gameHeight = 700;
+    let basketWidth = 120;
+    let basketX = 150;
+    let apples = [];
+    let score = 0;
+    let gameRunning = true;
+    let animId = 0;
+    let lastTime = 0;
+
+    function updateGameSize() {
+      const rect = game.getBoundingClientRect();
+      gameWidth = rect.width;
+      gameHeight = rect.height;
+      basketWidth = Math.min(120, gameWidth * 0.32);
+      basket.style.width = basketWidth + "px";
+      basketX = Math.max(0, Math.min(basketX, gameWidth - basketWidth));
+      basket.style.left = basketX + "px";
+    }
+
+    function setBasketPositionFromPointer(clientX) {
+      const rect = game.getBoundingClientRect();
+      const x = clientX - rect.left;
+      basketX = Math.max(0, Math.min(x - basketWidth / 2, gameWidth - basketWidth));
+      basket.style.left = basketX + "px";
+    }
+
+    game.addEventListener("pointerdown", (e) => {
+      if (!gameRunning) return;
+      setBasketPositionFromPointer(e.clientX);
+    });
+
+    game.addEventListener("pointermove", (e) => {
+      if (!gameRunning) return;
+      setBasketPositionFromPointer(e.clientX);
+    });
+
+    function createApple() {
+      const apple = document.createElement("div");
+      apple.className = "apple";
+      const x = Math.random() * (gameWidth - 28);
+      const y = -30;
+      apple.style.left = x + "px";
+      apple.style.top = y + "px";
+      game.appendChild(apple);
+
+      apples.push({
+        el: apple,
+        x,
+        y,
+        speed: 2.4 + Math.random() * 1.9
+      });
+    }
+
+    function checkCatch(apple) {
+      const basketTop = gameHeight - 70 - 52;
+      const basketLeft = basketX;
+      const basketRight = basketX + basketWidth;
+      const appleLeft = apple.x;
+      const appleRight = apple.x + 28;
+      const appleBottom = apple.y + 28;
+
+      const caught =
+        appleBottom >= basketTop &&
+        appleBottom <= basketTop + 24 &&
+        appleRight >= basketLeft + 10 &&
+        appleLeft <= basketRight - 10;
+
+      if (caught) {
+        score += 1;
+        scoreEl.textContent = score;
+        apple.el.remove();
+        return true;
+      }
+
+      if (appleBottom >= gameHeight - 70 + 10) {
+        apple.el.remove();
+        return true;
+      }
+
+      return false;
+    }
+
+    function tick(ts) {
+      if (!gameRunning) return;
+
+      const delta = ts - lastTime || 16;
+      lastTime = ts;
+
+      if (Math.random() < 0.023 + score * 0.0012) {
+        createApple();
+      }
+
+      for (let i = apples.length - 1; i >= 0; i--) {
+        const apple = apples[i];
+        apple.y += apple.speed * (delta / 16);
+        apple.el.style.top = apple.y + "px";
+        apple.el.style.left = apple.x + "px";
+
+        if (checkCatch(apple)) {
+          apples.splice(i, 1);
+        }
+      }
+
+      animId = requestAnimationFrame(tick);
+    }
+
+    function resetGame() {
+      apples.forEach(a => a.el.remove());
+      apples = [];
+      score = 0;
+      scoreEl.textContent = "0";
+      basketX = (gameWidth - basketWidth) / 2;
+      basket.style.left = basketX + "px";
+      gameRunning = true;
+      message.classList.remove("show");
+      lastTime = 0;
+      requestAnimationFrame(tick);
+    }
+
+    restartBtn.addEventListener("click", resetGame);
+    window.addEventListener("resize", updateGameSize);
+
+    updateGameSize();
+    resetGame();
+  </script>
+</body>
+</html>
