@@ -5,638 +5,529 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#8ad0ff" />
-  <title>Apple Defense</title>
+  <meta name="theme-color" content="#0b111a" />
+  <title>Turbo Highway</title>
   <style>
     :root {
-      --sky-top: #9ee0ff;
-      --sky-mid: #dff5ff;
-      --grass-top: #d7f7a7;
-      --grass-bottom: #b9e98a;
-      --hud-bg: rgba(255,255,255,0.72);
-      --panel-border: rgba(0,0,0,0.18);
-      --dark: #1d2b3a;
-      --gun: #303840;
-      --gun-detail: #788694;
-      --switch: #ffca62;
-      --switch-rail: #7c4d2d;
-      --char-skin: #f9d2a7;
-      --char-shirt: #2c7be5;
-      --char-bag: #6f4a3b;
-      --apple-red: #d81d1d;
-      --apple-dark: #9f1010;
-      --apple-leaf: #3b8f2d;
-      --gold: #ffd75a;
-      --danger: #ff4d4d;
-      --boss: #7f26ff;
+      --bg-1: #0b111a;
+      --bg-2: #171f2b;
+      --road: #1e2833;
+      --lane: rgba(255,255,255,0.7);
+      --grass: #1b6f38;
+      --grass-dark: #0f4d27;
+      --hud: rgba(10, 14, 20, 0.6);
+      --accent: #5cd2ff;
+      --text: #edf7ff;
+      --danger: #ff5b5b;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
     html, body {
       margin: 0; width: 100%; height: 100%; overflow: hidden;
-      background: #8ad0ff; font-family: Arial, sans-serif; color: var(--dark);
+      background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      color: var(--text); font-family: Arial, sans-serif;
       touch-action: none;
-    }
-    body {
-      display: flex; align-items: center; justify-content: center;
-      padding: max(10px, env(safe-area-inset-top)) 0 max(10px, env(safe-area-inset-bottom));
     }
 
-    #game {
-      position: relative;
-      width: min(94vw, 440px);
-      height: min(86vh, 760px);
-      border: 5px solid #2d4d3a;
-      border-radius: 20px;
-      overflow: hidden;
-      background: linear-gradient(var(--sky-top) 0%, var(--sky-mid) 62%, var(--grass-top) 62%, var(--grass-bottom) 100%);
-      box-shadow: 0 14px 30px rgba(0,0,0,0.18);
-      touch-action: none;
+    body {
+      display: flex; align-items: center; justify-content: center;
+      padding: max(12px, env(safe-area-inset-top)) 0 max(12px, env(safe-area-inset-bottom));
+    }
+
+    #gameWrap {
+      position: relative; width: min(96vw, 460px); height: min(92vh, 820px);
+      border: 4px solid #203046; border-radius: 22px; overflow: hidden;
+      background: linear-gradient(180deg, #15202d, #0b111a 48%, #0b111a);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    }
+
+    canvas {
+      position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+      background: linear-gradient(180deg, #2a3f53 0%, #0d1320 40%, #0b111a 100%);
     }
 
     .hud {
-      position: absolute; top: 8px; left: 8px; right: 8px; z-index: 30;
-      display: flex; justify-content: space-between; align-items: center; gap: 8px;
-    }
-
-    .panel {
-      background: var(--hud-bg); border: 3px solid var(--panel-border);
-      border-radius: 12px; padding: 8px 10px; font-weight: bold;
-      font-size: clamp(13px, 2.8vw, 16px); text-align: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      min-width: 70px;
-    }
-
-    .world {
-      position: absolute; inset: 0;
-    }
-
-    .ground {
-      position: absolute; left: 0; right: 0; bottom: 0; height: 72px;
-      background: linear-gradient(#7edc63, #5ca947);
-      border-top: 4px solid #447a35; z-index: 1;
-    }
-
-    .effect-layer, .projectile-layer, .apple-layer {
-      position: absolute; inset: 0; pointer-events: none; z-index: 15;
-    }
-
-    .player {
-      position: absolute; bottom: 18px; left: 50%;
-      width: 110px; height: 120px; z-index: 12;
+      position: absolute; top: 12px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      z-index: 10;
       pointer-events: none;
     }
 
-    .player .char-body {
-      position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
-      width: 64px; height: 78px; border-radius: 12px 12px 18px 18px;
-      background: linear-gradient(var(--char-shirt), #1b5ec7);
-      box-shadow: inset 0 -12px 0 rgba(0,0,0,0.12);
+    .panel {
+      background: var(--hud); border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 12px; padding: 8px 10px; font-weight: bold; box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      font-size: clamp(12px, 2.8vw, 16px);
     }
 
-    .player .head {
-      position: absolute; left: 50%; top: 0; transform: translateX(-50%);
-      width: 36px; height: 36px; border-radius: 50%;
-      background: var(--char-skin);
-      border: 3px solid rgba(0,0,0,0.08);
-      box-shadow: inset -6px -4px 0 rgba(0,0,0,0.05);
+    .menu {
+      position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+      background: rgba(6,10,15,0.55);
     }
 
-    .player .head::before, .player .head::after {
-      content: ""; position: absolute; top: 12px; width: 4px; height: 4px; border-radius: 50%; background: #23313d;
-    }
-    .player .head::before { left: 9px; }
-    .player .head::after { right: 9px; }
+    .menu.hidden { display: none; }
 
-    .player .backpack {
-      position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
-      width: 48px; height: 54px; border-radius: 14px;
-      background: linear-gradient(var(--char-bag), #4f352d);
-      border: 3px solid rgba(0,0,0,0.1);
-      z-index: 2;
+    .panelBox {
+      width: min(86vw, 320px); background: rgba(19,25,31,0.9);
+      border: 2px solid rgba(255,255,255,0.15); border-radius: 18px; padding: 18px 16px;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.25);
     }
 
-    .player .switch-rail {
-      position: absolute; left: 50%; bottom: 42px; transform: translateX(-50%);
-      width: 22px; height: 12px; border-radius: 999px;
-      background: var(--switch-rail);
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.25);
-      z-index: 5;
-    }
-    .player .switch-rail::after {
-      content: ""; position: absolute; left: 2px; top: 2px;
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--switch);
-      box-shadow: 0 0 8px rgba(255,202,98,0.8);
-      transition: left 0.15s ease;
-    }
-    .player.mode-burst .switch-rail::after { left: 12px; }
-
-    .player .gun {
-      position: absolute; right: 8px; bottom: 35px;
-      width: 58px; height: 18px; border-radius: 10px;
-      background: linear-gradient(var(--gun), #202932);
-      border: 3px solid rgba(255,255,255,0.12);
-      box-shadow: inset 0 0 10px rgba(255,255,255,0.08);
-      z-index: 6; transform: rotate(-10deg);
-    }
-    .player .gun::before {
-      content: ""; position: absolute; left: -10px; top: 2px;
-      width: 18px; height: 10px; background: linear-gradient(var(--gun-detail), #586570);
-      border-radius: 6px;
-    }
-    .player .gun::after {
-      content: ""; position: absolute; right: -10px; top: 3px; width: 10px; height: 8px;
-      background: linear-gradient(#444a51, #1d2127); border-radius: 4px;
+    h1 {
+      margin: 0 0 12px; font-size: clamp(26px, 7vw, 38px); text-align: center;
     }
 
-    .apple {
-      position: absolute; width: 32px; height: 32px; border-radius: 50%;
-      background: radial-gradient(circle at 30% 25%, #ffb1b1, var(--apple-red) 48%, var(--apple-dark) 100%);
-      box-shadow: inset -4px -4px 0 rgba(0,0,0,0.12);
-      z-index: 10;
-    }
-    .apple::before {
-      content: ""; position: absolute; width: 6px; height: 12px; left: 13px; top: -11px;
-      border-radius: 50% 50% 40% 40%; background: var(--apple-leaf); transform: rotate(18deg);
-    }
-    .apple::after {
-      content: ""; position: absolute; width: 9px; height: 9px; left: 13px; top: -3px;
-      border-radius: 50%; background: #6b9b2d; transform: rotate(20deg);
+    .pickerRow {
+      display: flex; flex-direction: column; gap: 8px; margin: 12px 0;
     }
 
-    .apple.boss {
-      width: 84px; height: 84px;
-      background: radial-gradient(circle at 30% 25%, #efc9ff, var(--boss) 50%, #4b0ea8 100%);
-      box-shadow: 0 0 18px rgba(127,38,255,0.7), inset -8px -8px 0 rgba(0,0,0,0.18);
-    }
-    .apple.boss::before {
-      left: 35px; top: -22px; width: 12px; height: 28px;
-      background: #2dff96;
-    }
-    .apple.boss::after {
-      left: 35px; top: -5px; width: 14px; height: 14px; background: #8df0ff;
+    label {
+      font-weight: bold; opacity: 0.9;
     }
 
-    .projectile {
-      position: absolute; width: 12px; height: 12px; border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, #fff7d0, #ffd34c 35%, #f4a815 100%);
-      box-shadow: 0 0 12px rgba(255,212,76,0.7);
-      z-index: 18;
+    select, button {
+      border: none; border-radius: 12px; font-size: 18px; font-weight: bold; padding: 12px 14px;
     }
 
-    .effect {
-      position: absolute; width: 12px; height: 12px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,189,58,0.8), rgba(255,98,0,0.3), transparent 70%);
-      pointer-events: none; z-index: 25;
+    select {
+      background: #eef5ff; color: #1c2630; width: 100%;
     }
 
-    .pause-btn {
-      position: absolute; right: 10px; top: 10px; z-index: 40;
-      border: none; background: rgba(0,0,0,0.2); color: white;
-      border-radius: 12px; padding: 8px 10px; font-weight: bold;
+    button {
+      width: 100%; background: linear-gradient(180deg, #6ee6ff, #39a7ff); color: #0b1724; cursor: pointer;
+      box-shadow: 0 10px 18px rgba(52,156,255,0.3);
     }
 
-    .overlay {
-      position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
-      background: rgba(10,25,25,0.42); color: white; text-align: center; z-index: 50;
-    }
-    .overlay.show { display: flex; }
-
-    .overlay-box {
-      display: flex; flex-direction: column; align-items: center; gap: 14px;
-      padding: 22px 26px; border-radius: 18px; background: rgba(26,38,52,0.64);
-      border: 3px solid rgba(255,255,255,0.18);
-      max-width: 280px;
-      width: 80%;
-    }
-    .overlay-box h2 { margin: 0; font-size: clamp(28px, 7vw, 42px); }
-    .overlay-box p { margin: 0; font-size: 16px; opacity: 0.9; }
-    .overlay-box button {
-      padding: 12px 22px; border: none; border-radius: 12px;
-      background: #f5bf54; color: #1d2b3a; font-size: 18px; font-weight: bold; cursor: pointer;
+    .footer {
+      text-align: center; font-size: 12px; opacity: 0.7; margin-top: 12px;
     }
   </style>
 </head>
 <body>
-  <div id="game">
+  <div id="gameWrap">
+    <canvas id="gameCanvas" width="420" height="760"></canvas>
+
     <div class="hud">
       <div class="panel">Score: <span id="score">0</span></div>
-      <div class="panel">Lives: <span id="lives">3</span></div>
-      <div class="panel">Wave: <span id="wave">1</span></div>
-      <div class="panel" id="modeTag">Mode: Single</div>
+      <div class="panel">Top Speed: <span id="speed">0</span> km/h</div>
+      <div class="panel">Best: <span id="best">0</span></div>
     </div>
 
-    <button class="pause-btn" id="pauseBtn">Pause</button>
-
-    <div class="world">
-      <div class="effect-layer" id="effects"></div>
-      <div class="projectile-layer" id="projectiles"></div>
-      <div class="apple-layer" id="apples"></div>
-      <div id="player" class="player mode-single">
-        <div class="head"></div>
-        <div class="backpack"></div>
-        <div class="switch-rail"></div>
-        <div class="gun"></div>
-        <div class="char-body"></div>
-      </div>
-      <div class="ground"></div>
-    </div>
-
-    <div class="overlay show" id="overlay">
-      <div class="overlay-box">
-        <h2 id="overlayTitle">Apple Defense</h2>
-        <p id="overlayText">Tap start to begin. Drag to move and tap to shoot.</p>
-        <button id="startBtn">Start Game</button>
+    <div class="menu" id="menu">
+      <div class="panelBox">
+        <h1>Turbo Highway</h1>
+        <div class="pickerRow">
+          <label for="carSelect">Pick your ride</label>
+          <select id="carSelect">
+            <option value="bmw">BMW</option>
+            <option value="civic">Honda Civic</option>
+            <option value="range">Range Rover</option>
+          </select>
+        </div>
+        <button id="startBtn">Start Run</button>
+        <div class="footer">Cut in and out of traffic to gain points.</div>
       </div>
     </div>
   </div>
 
   <script>
-    const game = document.getElementById('game');
-    const player = document.getElementById('player');
-    const scoreEl = document.getElementById('score');
-    const livesEl = document.getElementById('lives');
-    const waveEl = document.getElementById('wave');
-    const modeTag = document.getElementById('modeTag');
-    const projectilesLayer = document.getElementById('projectiles');
-    const applesLayer = document.getElementById('apples');
-    const effectsLayer = document.getElementById('effects');
-    const overlay = document.getElementById('overlay');
-    const overlayTitle = document.getElementById('overlayTitle');
-    const overlayText = document.getElementById('overlayText');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const menu = document.getElementById('menu');
+    const carSelect = document.getElementById('carSelect');
     const startBtn = document.getElementById('startBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
+    const scoreEl = document.getElementById('score');
+    const speedEl = document.getElementById('speed');
+    const bestEl = document.getElementById('best');
 
-    const modes = ['Single', 'Burst'];
-    let modeIndex = 0;
-    let gameWidth = 420;
-    let gameHeight = 700;
-    let playerX = gameWidth / 2;
-    let lives = 3;
+    const CAR_DEFS = {
+      bmw: { name: 'BMW', color: '#5ac8fa', maxSpeed: 120, handling: 1.25, width: 44, height: 82 },
+      civic: { name: 'Honda Civic', color: '#ff5d5d', maxSpeed: 110, handling: 1.1, width: 42, height: 80 },
+      range: { name: 'Range Rover', color: '#52d68b', maxSpeed: 100, handling: 0.9, width: 48, height: 86 }
+    };
+
     let score = 0;
-    let wave = 1;
-    let isPlaying = false;
-    let isPaused = false;
-    let gameOver = false;
+    let best = Number(localStorage.getItem('turboHighwayBest') || 0);
+    bestEl.textContent = best;
+
+    let activeCar = 'bmw';
+    let gameRunning = false;
     let lastTime = 0;
-    let spawnTimer = 0;
-    let bossSpawned = false;
-    let projectileId = 0;
+    let playerLane = 1;
+    let laneTarget = 1;
+    let pX = 0;
+    let roadScroll = 0;
+    let traffic = [];
+    let streak = 0;
+    let speedMph = 0;
+    let time = 0;
+    let laneCutCooldown = 0;
+    let lastLaneChange = 0;
 
-    const projectiles = [];
-    const apples = [];
-    const effects = [];
+    const road = {
+      left: 0,
+      right: 0,
+      width: 0,
+      laneCount: 3,
+      horizon: 0,
+      baseY: 0,
+    };
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let audioReady = false;
-
-    function initAudio() {
-      if (!audioReady) {
-        audioCtx.resume();
-        audioReady = true;
-      }
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.max(320, rect.width) * ratio;
+      canvas.height = Math.max(560, rect.height) * ratio;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      road.horizon = canvas.height * 0.22;
+      road.baseY = canvas.height * 0.95;
     }
 
-    function playTone(freq = 660, duration = 0.05, type = 'square', gainValue = 0.03) {
-      if (!audioReady) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = type;
-      osc.frequency.value = freq;
-      gain.gain.value = gainValue;
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      osc.start();
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-      osc.stop(audioCtx.currentTime + duration);
+    function resetRoad() {
+      road.left = canvas.width * 0.20;
+      road.right = canvas.width * 0.80;
+      road.width = road.right - road.left;
+      pX = laneToX(playerLane);
     }
 
-    function updateModeUI() {
-      modeTag.textContent = `Mode: ${modes[modeIndex]}`;
-      player.classList.toggle('mode-burst', modeIndex === 1);
-      player.classList.toggle('mode-single', modeIndex === 0);
+    function laneToX(lane) {
+      const laneWidth = road.width / road.laneCount;
+      return road.left + laneWidth * (lane + 0.5);
     }
 
-    function updateSize() {
-      const rect = game.getBoundingClientRect();
-      gameWidth = rect.width;
-      gameHeight = rect.height;
-      playerX = Math.max(30, Math.min(playerX || gameWidth / 2, gameWidth - 30));
-      player.style.left = playerX + 'px';
+    function xForLane(lane, z) {
+      const laneWidth = road.width / road.laneCount;
+      return road.left + laneWidth * (lane + 0.5) + (z * 0.16 * (Math.sin((lane + 1) * 1.4) * 18));
     }
 
-    function toggleMode() {
-      modeIndex = (modeIndex + 1) % modes.length;
-      updateModeUI();
-      playTone(520, 0.05, 'triangle', 0.025);
+    function getCarStats() {
+      return CAR_DEFS[activeCar];
     }
 
-    function setPlayerX(clientX) {
-      const rect = game.getBoundingClientRect();
-      const x = clientX - rect.left;
-      playerX = Math.max(28, Math.min(x, gameWidth - 28));
-      player.style.left = `${playerX}px`;
-    }
-
-    function createExplosion(x, y, color = '#ffb347') {
-      for (let i = 0; i < 18; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'effect';
-        particle.style.left = `${x}px`;
-        particle.style.top = `${y}px`;
-        particle.style.background = `radial-gradient(circle, rgba(255,255,255,0.9), ${color}, transparent 72%)`;
-        particle.style.width = `${8 + Math.random() * 10}px`;
-        particle.style.height = particle.style.width;
-        effectsLayer.appendChild(particle);
-
-        effects.push({
-          el: particle,
-          x,
-          y,
-          vx: (Math.random() - 0.5) * 8,
-          vy: (Math.random() - 0.5) * 8,
-          life: 25 + Math.random() * 18
-        });
-      }
-    }
-
-    function spawnApple(forceBoss = false) {
-      const apple = document.createElement('div');
-      const isBoss = forceBoss || (score > 0 && score % 12 === 0 && !bossSpawned);
-      apple.className = `apple${isBoss ? ' boss' : ''}`;
-      const x = 18 + Math.random() * (gameWidth - 50);
-      const y = -30;
-      apple.style.left = `${x}px`;
-      apple.style.top = `${y}px`;
-      applesLayer.appendChild(apple);
-
-      apples.push({
-        el: apple,
-        x,
-        y,
-        speed: isBoss ? 1.2 : 2 + Math.random() * 2.4 + wave * 0.2,
-        isBoss,
-        hp: isBoss ? 4 : 1
-      });
-
-      if (isBoss) {
-        bossSpawned = true;
-        overlayTitle.textContent = 'Boss Wave!';
-        overlayText.textContent = 'Destroy the giant apple.';
-        setTimeout(() => {
-          if (overlay.classList.contains('show')) overlay.classList.remove('show');
-        }, 700);
-      }
-    }
-
-    function fireProjectile() {
-      if (!isPlaying || isPaused || gameOver) return;
-      initAudio();
-      playTone(780, 0.05, 'square', 0.03);
-      const baseX = playerX + 22;
-      const baseY = gameHeight - 68;
-      const shots = modeIndex === 1 ? [-0.25, 0, 0.25] : [0];
-
-      shots.forEach((angle) => {
-        const bullet = document.createElement('div');
-        bullet.className = 'projectile';
-        bullet.style.left = `${baseX - 6}px`;
-        bullet.style.top = `${baseY - 8}px`;
-        projectilesLayer.appendChild(bullet);
-
-        projectiles.push({
-          id: ++projectileId,
-          el: bullet,
-          x: baseX - 6,
-          y: baseY - 8,
-          vx: Math.sin(angle) * 2.2,
-          vy: -10,
-          life: 90
-        });
-      });
-    }
-
-    function showOverlay(title, text, buttonText) {
-      overlayTitle.textContent = title;
-      overlayText.textContent = text;
-      startBtn.textContent = buttonText;
-      overlay.classList.add('show');
+    function setCarSelection() {
+      activeCar = carSelect.value;
     }
 
     function startGame() {
-      initAudio();
-      score = 0; lives = 3; wave = 1; gameOver = false; isPaused = false; isPlaying = true;
-      lastTime = 0; spawnTimer = 0; bossSpawned = false;
+      setCarSelection();
+      score = 0;
+      best = Number(localStorage.getItem('turboHighwayBest') || 0);
+      bestEl.textContent = best;
+      playerLane = 1;
+      laneTarget = 1;
+      roadScroll = 0;
       scoreEl.textContent = '0';
-      livesEl.textContent = '3';
-      waveEl.textContent = '1';
-      pauseBtn.textContent = 'Pause';
-      overlay.classList.remove('show');
-
-      while (apples.length) {
-        const a = apples.pop(); a.el.remove();
+      speedMph = 70;
+      time = 0;
+      streak = 0;
+      laneCutCooldown = 0;
+      lastLaneChange = 0;
+      traffic = [];
+      for (let i = 0; i < 8; i++) {
+        spawnTraffic(i * 96 + 140);
       }
-      while (projectiles.length) {
-        const p = projectiles.pop(); p.el.remove();
-      }
-      while (effects.length) {
-        const e = effects.pop(); e.el.remove();
-      }
-
-      playerX = gameWidth / 2;
-      player.style.left = `${playerX}px`;
-      playTone(440, 0.1, 'triangle', 0.04);
+      menu.classList.add('hidden');
+      gameRunning = true;
+      lastTime = 0;
       requestAnimationFrame(loop);
     }
 
-    function pauseGame() {
-      if (!isPlaying || gameOver) return;
-      isPaused = !isPaused;
-      pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
-      if (isPaused) {
-        showOverlay('Paused', 'Tap resume to continue.', 'Resume');
-      } else {
-        overlay.classList.remove('show');
-        requestAnimationFrame(loop);
-      }
+    function spawnTraffic(offset = 0) {
+      const lane = Math.floor(Math.random() * 3);
+      const carType = ['bmw', 'civic', 'range'][Math.floor(Math.random() * 3)];
+      const stats = CAR_DEFS[carType];
+      traffic.push({
+        lane,
+        x: laneToX(lane),
+        y: -offset - Math.random() * 120,
+        width: stats.width,
+        height: stats.height,
+        color: stats.color,
+        speed: 120 + Math.random() * 80,
+        type: carType,
+        turbo: Math.random() > 0.35,
+        passed: false,
+        scored: false,
+      });
     }
 
-    function updateWave() {
-      const newWave = Math.floor(score / 12) + 1;
-      if (newWave !== wave) {
-        wave = newWave;
-        waveEl.textContent = wave;
-        playTone(880, 0.1, 'sawtooth', 0.04);
-      }
+    function updatePlayerTargetFromPointer(clientX) {
+      if (!gameRunning) return;
+      const rect = canvas.getBoundingClientRect();
+      const nx = (clientX - rect.left) / rect.width;
+      const desiredLane = Math.min(2, Math.max(0, Math.floor(nx * 3)));
+      laneTarget = desiredLane;
     }
 
-    function checkProjectileHits() {
-      for (let i = projectiles.length - 1; i >= 0; i--) {
-        const p = projectiles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.el.style.left = `${p.x}px`;
-        p.el.style.top = `${p.y}px`;
-        p.life--;
-
-        if (p.x < -20 || p.x > gameWidth + 20 || p.y < -20 || p.life <= 0) {
-          p.el.remove();
-          projectiles.splice(i, 1);
-          continue;
-        }
-
-        for (let j = apples.length - 1; j >= 0; j--) {
-          const apple = apples[j];
-          const dx = p.x - (apple.x + apple.el.offsetWidth / 2);
-          const dy = p.y - (apple.y + apple.el.offsetHeight / 2);
-          const dist = Math.hypot(dx, dy);
-
-          if (dist < (apple.isBoss ? 42 : 18)) {
-            apple.hp -= 1;
-            p.el.remove();
-            projectiles.splice(i, 1);
-
-            createExplosion(p.x, p.y, apple.isBoss ? '#d8b4ff' : '#ffb347');
-
-            if (apple.hp <= 0) {
-              apple.el.remove();
-              apples.splice(j, 1);
-              score += apple.isBoss ? 8 : 1;
-              scoreEl.textContent = score;
-              updateWave();
-              playTone(apple.isBoss ? 140 : 520, apple.isBoss ? 0.14 : 0.07, 'triangle', apple.isBoss ? 0.05 : 0.03);
-              if (apple.isBoss) bossSpawned = false;
-            }
-            break;
-          }
-        }
-      }
+    function handlePointer(e) {
+      updatePlayerTargetFromPointer(e.clientX);
     }
 
-    function updateApples(dt) {
-      for (let i = apples.length - 1; i >= 0; i--) {
-        const apple = apples[i];
-        apple.y += apple.speed * dt;
-        apple.el.style.top = `${apple.y}px`;
-        apple.el.style.left = `${apple.x}px`;
-
-        if (apple.y > gameHeight - 84) {
-          apple.el.remove();
-          apples.splice(i, 1);
-
-          if (apple.isBoss) {
-            bossSpawned = false;
-            lives -= 2;
-          } else {
-            lives -= 1;
-          }
-
-          livesEl.textContent = lives;
-          createExplosion(apple.x, apple.y, '#ff4d4d');
-          playTone(220, 0.1, 'sawtooth', 0.04);
-
-          if (lives <= 0) {
-            isPlaying = false;
-            gameOver = true;
-            showOverlay('Game Over', `Final Score: ${score}`, 'Play Again');
-            playTone(120, 0.3, 'square', 0.04);
-          }
-        }
-      }
-    }
-
-    function updateEffects() {
-      for (let i = effects.length - 1; i >= 0; i--) {
-        const e = effects[i];
-        e.x += e.vx;
-        e.y += e.vy;
-        e.life -= 1;
-        e.el.style.left = `${e.x}px`;
-        e.el.style.top = `${e.y}px`;
-        e.el.style.opacity = `${Math.max(e.life / 40, 0)}`;
-        if (e.life <= 0) {
-          e.el.remove();
-          effects.splice(i, 1);
-        }
-      }
-    }
-
-    function loop(timestamp) {
-      if (!isPlaying || isPaused || gameOver) return;
-
-      const delta = timestamp - lastTime || 16;
-      lastTime = timestamp;
-      spawnTimer += delta;
-
-      if (spawnTimer > Math.max(500, 900 - wave * 45)) {
-        spawnApple();
-        spawnTimer = 0;
-      }
-
-      if (score > 0 && score % 12 === 0 && !bossSpawned) {
-        spawnApple(true);
-      }
-
-      checkProjectileHits();
-      updateApples(delta / 16);
-      updateEffects();
-      requestAnimationFrame(loop);
-    }
-
-    game.addEventListener('pointerdown', (e) => {
-      if (!isPlaying || e.target.id === 'pauseBtn') return;
-      setPlayerX(e.clientX);
-      fireProjectile();
+    canvas.addEventListener('pointerdown', handlePointer);
+    canvas.addEventListener('pointermove', (e) => {
+      if (e.pressure > 0 || e.pointerType === 'touch') handlePointer(e);
     });
-
-    game.addEventListener('pointermove', (e) => {
-      if (isPlaying && !isPaused && !gameOver) {
-        setPlayerX(e.clientX);
-      }
-    });
-
-    player.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      if (!isPlaying || isPaused || gameOver) return;
-      const rect = player.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      if (x < rect.width * 0.48 && y < rect.height * 0.7) {
-        toggleMode();
-      } else {
-        fireProjectile();
-      }
-    });
-
-    startBtn.addEventListener('click', () => {
-      if (isPaused && isPlaying && !gameOver) {
-        isPaused = false;
-        pauseBtn.textContent = 'Pause';
-        overlay.classList.remove('show');
-        requestAnimationFrame(loop);
-      } else {
-        startGame();
-      }
-    });
-
-    pauseBtn.addEventListener('click', pauseGame);
 
     document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        if (!isPlaying && !gameOver) startGame();
-        else fireProjectile();
-      }
-      if (e.key.toLowerCase() === 'm') toggleMode();
-      if (e.key.toLowerCase() === 'p') pauseGame();
+      if (!gameRunning) return;
+      if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') laneTarget = Math.max(0, laneTarget - 1);
+      if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') laneTarget = Math.min(2, laneTarget + 1);
     });
 
-    updateSize();
-    updateModeUI();
-    showOverlay('Apple Defense', 'Tap start to begin. Drag to move and tap to shoot.', 'Start Game');
-    window.addEventListener('resize', updateSize);
+    startBtn.addEventListener('click', startGame);
+    carSelect.addEventListener('change', setCarSelection);
+
+    function update() {
+      const dt = Math.min(32, (lastTime ? (performance.now() - lastTime) : 16));
+      lastTime = performance.now();
+      if (!gameRunning) return;
+
+      time += dt;
+      speedMph = Math.min(getCarStats().maxSpeed, 65 + (time * 0.025));
+      roadScroll += dt * 0.32 + speedMph * 0.02;
+
+      playerLane += (laneTarget - playerLane) * 0.14;
+      pX = laneToX(playerLane);
+
+      laneCutCooldown = Math.max(0, laneCutCooldown - dt);
+      if (Math.abs(playerLane - laneTarget) > 0.1) {
+        lastLaneChange += dt;
+      }
+
+      for (let i = traffic.length - 1; i >= 0; i--) {
+        const car = traffic[i];
+        const carSpeed = (car.speed + speedMph * 0.5) * (dt / 16);
+        car.y += carSpeed;
+
+        if (!car.scored && car.y > canvas.height * 0.82) {
+          if (Math.abs(car.lane - playerLane) <= 0.15) {
+            crash();
+          } else {
+            const distancePenalty = Math.abs(car.lane - playerLane);
+            const value = Math.max(4, 15 - distancePenalty * 5 + streak * 0.6);
+            score += Math.round(value);
+            scoreEl.textContent = score;
+            car.scored = true;
+          }
+        }
+
+        if (Math.abs(car.lane - playerLane) <= 0.2 && car.y > canvas.height * 0.36 && car.y < canvas.height * 0.82) {
+          const laneShift = Math.abs(playerLane - lastLaneChange * 0.001);
+          if (Math.abs(playerLane - laneTarget) > 0.38 && laneCutCooldown <= 0) {
+            score += 12;
+            streak += 1;
+            scoreEl.textContent = score;
+            laneCutCooldown = 420;
+            playBurst();
+          }
+        }
+
+        if (car.y > canvas.height + 80) {
+          traffic.splice(i, 1);
+          spawnTraffic(Math.random() * 180);
+        }
+      }
+
+      if (Math.random() < 0.014 + (score * 0.0005)) {
+        spawnTraffic(-80);
+      }
+
+      if (score > best) {
+        best = score;
+        localStorage.setItem('turboHighwayBest', String(best));
+        bestEl.textContent = best;
+      }
+
+      speedEl.textContent = Math.round(speedMph);
+      scoreEl.textContent = score;
+    }
+
+    function crash() {
+      gameRunning = false;
+      menu.classList.remove('hidden');
+      startBtn.textContent = 'Restart Run';
+      const title = document.querySelector('#menu h1');
+      title.textContent = 'Crash!';
+      const footer = document.querySelector('.footer');
+      footer.textContent = 'You scored ' + score + ' points. Try again.';
+      if (score > best) {
+        best = score;
+        localStorage.setItem('turboHighwayBest', String(best));
+        bestEl.textContent = best;
+      }
+    }
+
+    function playBurst() {
+      const osc = new AudioContext();
+      const o = osc.createOscillator();
+      const g = osc.createGain();
+      o.type = 'triangle';
+      o.frequency.value = 420 + Math.random() * 180;
+      g.gain.value = 0.04;
+      o.connect(g); g.connect(osc.destination);
+      o.start();
+      o.stop(osc.currentTime + 0.08);
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      sky.addColorStop(0, '#395b7d');
+      sky.addColorStop(0.45, '#1b2a35');
+      sky.addColorStop(1, '#0d1119');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#2a7d52';
+      ctx.fillRect(0, canvas.height * 0.65, canvas.width, canvas.height * 0.35);
+
+      ctx.fillStyle = '#1f5d39';
+      for (let i = 0; i < 30; i++) {
+        const x = (i * 87 + (roadScroll * 0.6)) % (canvas.width + 100);
+        const h = 22 + (i % 4) * 15;
+        ctx.fillRect(x, canvas.height * 0.7 + (i % 3) * 14, 42, h);
+      }
+
+      ctx.fillStyle = '#2f3c48';
+      const roadLeft = canvas.width * 0.18;
+      const roadRight = canvas.width * 0.82;
+      const roadBottom = canvas.height;
+      ctx.beginPath();
+      ctx.moveTo(roadLeft, 0);
+      ctx.lineTo(roadRight, 0);
+      ctx.lineTo(roadRight, roadBottom);
+      ctx.lineTo(roadLeft, roadBottom);
+      ctx.closePath();
+      ctx.fill();
+
+      const laneWidth = (roadRight - roadLeft) / 3;
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([18, 20]);
+      for (let i = 1; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(roadLeft + laneWidth * i, 0);
+        ctx.lineTo(roadLeft + laneWidth * i, canvas.height);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = '#d9edf9';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(roadLeft, 0);
+      ctx.lineTo(roadLeft, canvas.height);
+      ctx.moveTo(roadRight, 0);
+      ctx.lineTo(roadRight, canvas.height);
+      ctx.stroke();
+    }
+
+    function drawPlayerCar() {
+      const stats = getCarStats();
+      const x = pX;
+      const y = canvas.height - 118;
+      const w = stats.width;
+      const h = stats.height;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = stats.color;
+
+      ctx.fillStyle = stats.color;
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+
+      ctx.fillStyle = '#dfeaf7';
+      ctx.fillRect(-w * 0.22, -h * 0.35, w * 0.44, h * 0.28);
+
+      ctx.fillStyle = '#0e1721';
+      ctx.fillRect(-w * 0.4, -h * 0.45, w * 0.17, h * 0.9);
+      ctx.fillRect(w * 0.23, -h * 0.45, w * 0.17, h * 0.9);
+
+      ctx.fillStyle = '#1a1d22';
+      ctx.fillRect(-w * 0.3, -h * 0.56, w * 0.6, h * 0.12);
+      ctx.fillRect(-w * 0.3, h * 0.42, w * 0.6, h * 0.12);
+
+      ctx.fillStyle = '#ffea7d';
+      ctx.fillRect(-w * 0.18, -h * 0.52, w * 0.36, 6);
+
+      ctx.restore();
+    }
+
+    function drawTrafficCar(car) {
+      const w = car.width;
+      const h = car.height;
+      const x = laneToX(car.lane);
+      const y = car.y;
+
+      ctx.save();
+      ctx.translate(x, y);
+      if (car.turbo) {
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = '#ffe066';
+      }
+
+      ctx.fillStyle = car.color;
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+
+      ctx.fillStyle = '#dfeaf7';
+      ctx.fillRect(-w * 0.22, -h * 0.28, w * 0.44, h * 0.24);
+
+      ctx.fillStyle = '#0e1721';
+      ctx.fillRect(-w * 0.4, -h * 0.45, w * 0.17, h * 0.9);
+      ctx.fillRect(w * 0.23, -h * 0.45, w * 0.17, h * 0.9);
+
+      if (car.turbo) {
+        ctx.fillStyle = '#ffe066';
+        ctx.fillRect(-w * 0.13, h * 0.48, w * 0.26, 5);
+      }
+
+      ctx.restore();
+    }
+
+    function drawHUDMarkers() {
+      const minY = canvas.height * 0.3;
+      for (let i = 0; i < 3; i++) {
+        const x = laneToX(i);
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.beginPath();
+        ctx.moveTo(x, minY);
+        ctx.lineTo(x, canvas.height - 20);
+        ctx.stroke();
+      }
+    }
+
+    function draw() {
+      drawBackground();
+      drawHUDMarkers();
+      for (const car of traffic) drawTrafficCar(car);
+      drawPlayerCar();
+    }
+
+    function loop(ts) {
+      if (!gameRunning) {
+        draw();
+        return;
+      }
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function init() {
+      resizeCanvas();
+      resetRoad();
+      draw();
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        resetRoad();
+      });
+    }
+
+    init();
+    menu.classList.remove('hidden');
   </script>
 </body>
 </html>
